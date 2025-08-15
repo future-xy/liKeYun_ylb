@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  likeyun-ylb:
+    build: .
+    image: likeyun-ylb:latest
+    container_name: likeyun-ylb
+    ports:
+      - "8080:80"  # Change 8080 to your desired port
+    volumes:
+      # Persistent data volumes
+      - ./data/mysql:/var/lib/mysql
+      - ./data/uploads:/var/www/html/console/upload
+      - ./data/logs:/var/log
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

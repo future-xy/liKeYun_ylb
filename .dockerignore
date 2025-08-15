@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+DOCKER_DEPLOYMENT_GUIDE.md
+
+# Data volumes (if they exist)
+data/
+
+# Development files
+.DS_Store
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Documentation
+README.md
+LICENSE*
+
+# Backup files
+*.bak
+*.backup
+*.sql
+
+# Node modules (if any)
+node_modules/
+
+# Python (if any)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
