@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     cron \
     curl \
+    procps \
+    net-tools \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
