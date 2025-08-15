@@ -12,14 +12,10 @@ User → Cloudflare (HTTPS) → Your Server (HTTP:8080) → Docker Container
 # SSH into your server
 ssh user@your-server-ip
 
-# Install Docker and Docker Compose
+# Install Docker (Docker Compose is included)
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
-
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
 
 # Logout and login again for group changes to take effect
 exit
@@ -29,12 +25,11 @@ ssh user@your-server-ip
 ### Step 2: Deploy the Application
 ```bash
 # Clone the repository
-git clone https://github.com/likeyun/liKeYun_Ylb.git
-cd liKeYun_Ylb
+git clone https://github.com/future-xy/liKeYun_ylb.git
+cd liKeYun_ylb
 
-# Modify docker-compose.yml to use port 8080 (already configured)
-# Start the container
-docker-compose up -d
+# Start the container (port 8080 is already configured)
+docker compose up -d
 
 # Verify it's running
 docker ps
@@ -214,7 +209,7 @@ docker exec likeyun-ylb sed -i "s/likeyun123456/YOUR_NEW_STRONG_PASSWORD/g" /var
 docker exec likeyun-ylb sed -i "s/likeyun123456/YOUR_NEW_STRONG_PASSWORD/g" /start.sh
 
 # Restart container
-docker-compose restart
+docker compose restart
 ```
 
 ## 🔒 Security Checklist
@@ -233,13 +228,13 @@ docker-compose restart
 ```bash
 # Check if container is running
 docker ps
-docker-compose logs
+docker compose logs
 
 # Check if port 8080 is accessible
 curl http://localhost:8080
 
 # Restart container
-docker-compose restart
+docker compose restart
 ```
 
 ### "Error 520/522/524" on Cloudflare
@@ -259,7 +254,7 @@ if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
 
 ```bash
 # View container logs
-docker-compose logs -f
+docker compose logs -f
 
 # Monitor resource usage
 docker stats likeyun-ylb
@@ -272,11 +267,11 @@ docker exec likeyun-ylb tail -f /var/log/nginx/access.log
 
 ### Update Application
 ```bash
-cd liKeYun_Ylb
+cd liKeYun_ylb
 git pull
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Backup Database

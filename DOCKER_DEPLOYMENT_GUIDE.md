@@ -6,26 +6,26 @@ Before deploying, ensure you have:
 - Docker installed (version 20.10 or higher)
 - Docker Compose installed (version 1.29 or higher)
 - At least 2GB of free disk space
-- Port 8080 available (or modify the port in docker-compose.yml)
+- Port 8080 available (or modify the port in docker compose.yml)
 
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/likeyun/liKeYun_Ylb.git
-cd liKeYun_Ylb
+git clone https://github.com/future-xy/liKeYun_ylb.git
+cd liKeYun_ylb
 ```
 
 ### 2. Build and Start the Container
 ```bash
 # Build and start the container
-docker-compose up -d
+docker compose up -d
 
 # Check if the container is running
 docker ps
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### 3. Initial Setup
@@ -52,14 +52,14 @@ liKeYun_Ylb/
 │   ├── uploads/      # User uploaded files (persistent)
 │   └── logs/         # Application logs
 ├── docker/           # Docker configuration files
-├── docker-compose.yml
+├── docker compose.yml
 └── Dockerfile
 ```
 
 ## 🔧 Configuration
 
 ### Changing the Port
-Edit `docker-compose.yml` and modify the ports section:
+Edit `docker compose.yml` and modify the ports section:
 ```yaml
 ports:
   - "YOUR_PORT:80"  # Replace YOUR_PORT with your desired port
@@ -73,7 +73,7 @@ Default database credentials are set in the Dockerfile. For production, you shou
 
 ### Timezone
 Default timezone is set to `Asia/Shanghai`. To change it:
-1. Edit the `TZ` environment variable in `docker-compose.yml`
+1. Edit the `TZ` environment variable in `docker compose.yml`
 2. Restart the container
 
 ## 🛠️ Common Operations
@@ -81,19 +81,19 @@ Default timezone is set to `Asia/Shanghai`. To change it:
 ### Start/Stop the Container
 ```bash
 # Start
-docker-compose up -d
+docker compose up -d
 
 # Stop
-docker-compose down
+docker compose down
 
 # Restart
-docker-compose restart
+docker compose restart
 ```
 
 ### View Logs
 ```bash
 # All logs
-docker-compose logs -f
+docker compose logs -f
 
 # Nginx logs
 docker exec likeyun-ylb tail -f /var/log/nginx/access.log
@@ -123,9 +123,9 @@ docker exec -i likeyun-ylb mysql -uroot -plikeyun123456 likeyun_ylb < backup.sql
 git pull
 
 # Rebuild and restart
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ## 🔒 Security Recommendations
@@ -173,7 +173,7 @@ docker-compose up -d
 ### Container Won't Start
 ```bash
 # Check logs
-docker-compose logs
+docker compose logs
 
 # Check if ports are in use
 netstat -tulpn | grep 8080
@@ -208,7 +208,7 @@ UPDATE huoma_user SET user_pass = MD5('newpassword') WHERE user_name = 'admin_us
 
 ### Check Container Health
 ```bash
-docker-compose ps
+docker compose ps
 docker inspect likeyun-ylb --format='{{.State.Health.Status}}'
 ```
 

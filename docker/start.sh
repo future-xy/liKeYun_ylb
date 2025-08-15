@@ -3,12 +3,21 @@
 # Start script for liKeYun_Ylb container
 echo "Starting liKeYun_Ylb services..."
 
+# Create necessary directories
+mkdir -p /var/log/mysql
+mkdir -p /var/lib/mysql
+mkdir -p /var/run/mysqld
+
+# Set proper permissions
+chown -R mysql:mysql /var/lib/mysql
+chown -R mysql:mysql /var/log/mysql
+chown -R mysql:mysql /var/run/mysqld
+
 # Ensure MySQL data directory exists and has proper permissions
 if [ ! -d "/var/lib/mysql/mysql" ]; then
     echo "Initializing MySQL database..."
-    mkdir -p /var/lib/mysql
-    chown -R mysql:mysql /var/lib/mysql
-    mysqld --initialize-insecure --user=mysql --datadir=/var/lib/mysql
+    # Initialize with insecure mode (no root password initially)
+    mysqld --initialize-insecure --user=mysql --datadir=/var/lib/mysql --log-error=/var/log/mysql/error.log
 fi
 
 # Start MySQL service first
