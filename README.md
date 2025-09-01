@@ -101,7 +101,29 @@ https://afdian.com/item/270573e4f97d11eea18d5254001e7c00
 
 <br>
 
-# ⚙️ 全新安装
+# 🐳 Docker 部署（推荐）
+
+最简单的部署方式，一键启动所有服务：
+
+```bash
+# 克隆仓库
+git clone https://github.com/future-xy/liKeYun_ylb.git
+cd liKeYun_ylb
+
+# 启动服务（默认使用80端口）
+sudo docker compose up -d
+
+# 访问安装页面
+http://your-server-ip/install/
+```
+
+详细部署文档：
+- 📚 [Cloudflare HTTPS 生产部署指南](DEPLOYMENT_CLOUDFLARE_HTTPS.md)
+- 📚 [Docker 部署详细说明](DOCKER_DEPLOYMENT_GUIDE.md)
+
+# ⚙️ 传统安装
+
+如果不使用 Docker，需要手动配置 PHP + MySQL 环境。
 
 访问 `install` 目录即可进入安装流程。
 

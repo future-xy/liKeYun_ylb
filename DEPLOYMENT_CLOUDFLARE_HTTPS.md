@@ -2,22 +2,29 @@
 
 ## Architecture Overview
 ```
-User → Cloudflare (HTTPS) → Your Server (HTTP:8080) → Docker Container
+User → Cloudflare (HTTPS) → Your Server (HTTP:80) → Docker Container
 ```
 
-## Step-by-Step Deployment Guide
+## ⚠️ Important: Cloudflare Port Requirements
+Cloudflare only proxies specific ports. We use **port 80** for HTTP traffic.
+- **Supported HTTP ports:** 80, 8880, 2052, 2082, 2086, 2095
+- **Common mistake:** Port 8080 is NOT proxied by Cloudflare!
+
+## 🐳 Docker-Only Deployment (Recommended)
+
+Everything runs in Docker for maximum portability and simplicity.
 
 ### Step 1: Prepare Your Server
 ```bash
 # SSH into your server
 ssh user@your-server-ip
 
-# Install Docker (Docker Compose is included)
+# Install Docker (includes Docker Compose)
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Logout and login again for group changes to take effect
+# Logout and login again for group changes
 exit
 ssh user@your-server-ip
 ```
@@ -28,23 +35,33 @@ ssh user@your-server-ip
 git clone https://github.com/future-xy/liKeYun_ylb.git
 cd liKeYun_ylb
 
-# Start the container (port 8080 is already configured)
-docker compose up -d
+# (Optional) Configure environment
+cp env.example .env
+# Edit .env if needed - default uses port 80
+
+# Start the container (requires sudo for port 80)
+sudo docker compose up -d
 
 # Verify it's running
 docker ps
-curl http://localhost:8080  # Should return HTML
+curl http://localhost  # Should return HTML
+```
+
+**Development Mode:** To use port 8080 for local development:
+```bash
+echo "HOST_PORT=8080" > .env
+docker compose up -d  # No sudo needed
+# Note: This won't work with Cloudflare proxy!
 ```
 
 ### Step 3: Configure Firewall
 ```bash
-# Allow SSH and HTTP from Cloudflare only
+# Allow SSH
 sudo ufw allow 22/tcp
 
-# Allow port 8080 only from Cloudflare IPs
-# Get Cloudflare IPs from: https://www.cloudflare.com/ips/
+# Allow port 80 only from Cloudflare IPs
 for ip in $(curl -s https://www.cloudflare.com/ips-v4); do
-    sudo ufw allow from $ip to any port 8080
+    sudo ufw allow from $ip to any port 80
 done
 
 # Enable firewall
@@ -66,8 +83,8 @@ sudo ufw status
 
 2. **Configure SSL/TLS**:
    - Go to SSL/TLS → Overview
-   - Set encryption mode to **Flexible** (Cloudflare to origin server uses HTTP)
-   - This is OK since Cloudflare handles the HTTPS for users
+   - Set encryption mode to **Flexible** (Cloudflare to origin uses HTTP)
+   - This is secure since Cloudflare handles HTTPS for users
 
 3. **Configure Page Rules** (Optional but recommended):
    - Go to Rules → Page Rules
@@ -79,107 +96,7 @@ sudo ufw status
    - Go to Security → WAF
    - Create custom rules as needed
 
-### Step 5: Configure Nginx Reverse Proxy (Alternative - More Secure)
-
-If you want better security with Full SSL mode in Cloudflare:
-
-```bash
-# Install Nginx on the host
-sudo apt update
-sudo apt install nginx certbot python3-certbot-nginx
-
-# Create Nginx configuration
-sudo nano /etc/nginx/sites-available/ylb
-```
-
-Add this configuration:
-```nginx
-server {
-    listen 80;
-    server_name ylb.domain.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Cloudflare real IP
-        set_real_ip_from 173.245.48.0/20;
-        set_real_ip_from 103.21.244.0/22;
-        set_real_ip_from 103.22.200.0/22;
-        set_real_ip_from 103.31.4.0/22;
-        set_real_ip_from 141.101.64.0/18;
-        set_real_ip_from 108.162.192.0/18;
-        set_real_ip_from 190.93.240.0/20;
-        set_real_ip_from 188.114.96.0/20;
-        set_real_ip_from 197.234.240.0/22;
-        set_real_ip_from 198.41.128.0/17;
-        set_real_ip_from 162.158.0.0/15;
-        set_real_ip_from 104.16.0.0/13;
-        set_real_ip_from 104.24.0.0/14;
-        set_real_ip_from 172.64.0.0/13;
-        set_real_ip_from 131.0.72.0/22;
-        real_ip_header CF-Connecting-IP;
-    }
-}
-```
-
-Enable the site:
-```bash
-sudo ln -s /etc/nginx/sites-available/ylb /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-
-# Get Cloudflare Origin Certificate (for Full SSL mode)
-# Go to Cloudflare → SSL/TLS → Origin Server
-# Create certificate and save the files
-sudo mkdir -p /etc/ssl/cloudflare
-sudo nano /etc/ssl/cloudflare/cert.pem  # Paste certificate
-sudo nano /etc/ssl/cloudflare/key.pem   # Paste private key
-
-# Update Nginx config for SSL
-sudo nano /etc/nginx/sites-available/ylb
-```
-
-Add SSL configuration:
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name ylb.domain.com;
-
-    ssl_certificate /etc/ssl/cloudflare/cert.pem;
-    ssl_certificate_key /etc/ssl/cloudflare/key.pem;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-    }
-}
-
-server {
-    listen 80;
-    server_name ylb.domain.com;
-    return 301 https://$server_name$request_uri;
-}
-```
-
-```bash
-# Reload Nginx
-sudo nginx -t
-sudo systemctl reload nginx
-
-# Update firewall for HTTPS
-sudo ufw allow 443/tcp
-```
-
-Then in Cloudflare, change SSL/TLS mode to **Full**.
-
-### Step 6: Initial Setup
+### Step 5: Initial Setup
 
 1. Visit `https://ylb.domain.com/install/`
 2. Complete the installation wizard:
@@ -193,7 +110,7 @@ Then in Cloudflare, change SSL/TLS mode to **Full**.
    docker exec likeyun-ylb rm -rf /var/www/html/install/
    ```
 
-### Step 7: Post-Installation Security
+### Step 6: Post-Installation Security
 
 ```bash
 # Change MySQL password (recommended)
@@ -212,6 +129,51 @@ docker exec likeyun-ylb sed -i "s/likeyun123456/YOUR_NEW_STRONG_PASSWORD/g" /sta
 docker compose restart
 ```
 
+## 🔄 Alternative Port Configurations
+
+### Using Cloudflare-Compatible Alternative Ports
+
+If port 80 is unavailable, use other Cloudflare-supported ports:
+
+```bash
+# Option 1: Port 8880 (HTTP alternative)
+echo "HOST_PORT=8880" > .env
+sudo docker compose up -d
+
+# Update firewall for port 8880
+for ip in $(curl -s https://www.cloudflare.com/ips-v4); do
+    sudo ufw allow from $ip to any port 8880
+done
+```
+
+### Multiple Services on Same Server
+
+If you need to run multiple services, consider using Docker networks and a reverse proxy container:
+
+```yaml
+# docker-compose.override.yml
+services:
+  nginx-proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - likeyun-ylb
+    networks:
+      - web
+
+  likeyun-ylb:
+    # Remove ports section from main service
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
+```
+
 ## 🔒 Security Checklist
 
 - [x] Cloudflare Proxy enabled (hides real server IP)
@@ -224,23 +186,53 @@ docker compose restart
 
 ## 🔧 Troubleshooting
 
+### Common Issue: "Error 522" - Connection Timed Out
+**Most common causes:**
+1. Using port 8080 with Cloudflare proxy enabled
+2. Firewall blocking Cloudflare IPs
+3. Container not running
+
+**Solutions:**
+```bash
+# Check container status
+docker ps
+docker compose logs
+
+# Test local access
+curl http://localhost
+
+# Check firewall
+sudo ufw status
+
+# Restart if needed
+sudo docker compose restart
+```
+
+### Port 80 Permission Denied
+```bash
+# Need sudo for privileged ports (< 1024)
+sudo docker compose up -d
+
+# Or use a higher port for development
+echo "HOST_PORT=8080" > .env
+docker compose up -d
+```
+
 ### "521 Web Server Is Down" Error
 ```bash
 # Check if container is running
 docker ps
-docker compose logs
 
-# Check if port 8080 is accessible
-curl http://localhost:8080
+# View logs
+docker compose logs -f
 
-# Restart container
-docker compose restart
+# Check health
+docker compose ps
+
+# Force recreate
+docker compose down
+docker compose up -d --force-recreate
 ```
-
-### "Error 520/522/524" on Cloudflare
-- 520: Unknown error - check server logs
-- 522: Connection timed out - check firewall allows Cloudflare IPs
-- 524: Timeout - increase Cloudflare timeout or optimize slow queries
 
 ### Real Visitor IPs Not Showing
 Add to your application's PHP files:
@@ -259,8 +251,12 @@ docker compose logs -f
 # Monitor resource usage
 docker stats likeyun-ylb
 
-# Check Nginx access logs
+# Check nginx logs inside container
 docker exec likeyun-ylb tail -f /var/log/nginx/access.log
+docker exec likeyun-ylb tail -f /var/log/nginx/error.log
+
+# Health check
+curl -I http://localhost
 ```
 
 ## 🔄 Maintenance
@@ -279,17 +275,44 @@ docker compose up -d
 # Create backup
 docker exec likeyun-ylb mysqldump -uroot -pYOUR_PASSWORD likeyun_ylb > backup_$(date +%Y%m%d).sql
 
+# Restore backup
+docker exec -i likeyun-ylb mysql -uroot -pYOUR_PASSWORD likeyun_ylb < backup_20240101.sql
+
 # Automated daily backup (add to crontab)
 0 2 * * * docker exec likeyun-ylb mysqldump -uroot -pYOUR_PASSWORD likeyun_ylb > /backups/ylb_$(date +\%Y\%m\%d).sql
 ```
 
+### View/Edit Files in Container
+```bash
+# Access container shell
+docker exec -it likeyun-ylb bash
+
+# View specific file
+docker exec likeyun-ylb cat /var/www/html/console/Db.php
+
+# Copy file out for editing
+docker cp likeyun-ylb:/var/www/html/config.php ./config.php
+
+# Copy file back
+docker cp ./config.php likeyun-ylb:/var/www/html/config.php
+```
+
 ---
 
-**Quick Summary:**
-1. Deploy Docker container on port 8080
-2. Configure Cloudflare DNS with proxy ON
-3. Set Cloudflare SSL to Flexible mode
-4. Configure firewall to only allow Cloudflare IPs
-5. Access via https://ylb.domain.com
+## 📋 Quick Deployment Checklist
 
-That's it! Your application is now accessible via HTTPS with Cloudflare's SSL certificate.
+1. ✅ Install Docker on server
+2. ✅ Clone repository
+3. ✅ Configure `.env` (optional)
+4. ✅ Run `sudo docker compose up -d`
+5. ✅ Configure firewall for Cloudflare IPs
+6. ✅ Set up Cloudflare DNS with proxy ON
+7. ✅ Set Cloudflare SSL to Flexible mode
+8. ✅ Access via `https://ylb.domain.com/install/`
+9. ✅ Complete setup and remove install directory
+10. ✅ Change default passwords
+
+⚠️ **Remember:** 
+- Use port 80 (or other Cloudflare-supported ports)
+- Port 8080 is NOT proxied by Cloudflare
+- Everything runs in Docker - no external dependencies needed!
