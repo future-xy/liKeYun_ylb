@@ -99,13 +99,15 @@ sudo ufw status
 ### Step 5: Initial Setup
 
 1. Visit `https://ylb.domain.com/install/`
-2. Complete the installation wizard:
+2. The environment check will run automatically
+3. Click "全新安装" (Fresh Install) when checks pass
+4. Complete the installation wizard:
    - Database Host: `localhost`
    - Database Name: `likeyun_ylb`
    - Database User: `root`
    - Database Password: `likeyun123456`
-3. Create admin account
-4. **Delete install directory**:
+5. Create admin account
+6. **Delete install directory after successful installation**:
    ```bash
    docker exec likeyun-ylb rm -rf /var/www/html/install/
    ```

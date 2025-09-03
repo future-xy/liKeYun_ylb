@@ -6,7 +6,7 @@ Before deploying, ensure you have:
 - Docker installed (version 20.10 or higher)
 - Docker Compose installed (version 1.29 or higher)
 - At least 2GB of free disk space
-- Port 8080 available (or modify the port in docker compose.yml)
+- Port 80 available (or modify the port in docker-compose.yml using HOST_PORT env variable)
 
 ## 🚀 Quick Start
 
@@ -29,15 +29,19 @@ docker compose logs -f
 ```
 
 ### 3. Initial Setup
-1. Open your browser and navigate to: `http://your-server-ip:8080/install/`
-2. Follow the installation wizard
-3. Use these database credentials during setup:
+1. Open your browser and navigate to: `http://your-server-ip/install/`
+   - Default uses port 80
+   - If using custom port: `http://your-server-ip:PORT/install/`
+2. The environment check will run automatically  
+3. Click "全新安装" (Fresh Install) when all checks pass
+4. Follow the installation wizard
+5. Use these database credentials during setup:
    - **Database Host**: `localhost`
    - **Database Name**: `likeyun_ylb`
    - **Database User**: `root`
    - **Database Password**: `likeyun123456`
-4. Create your admin account
-5. After successful installation, **DELETE the install directory**:
+6. Create your admin account
+7. After successful installation, **DELETE the install directory**:
    ```bash
    docker exec likeyun-ylb rm -rf /var/www/html/install/
    ```
@@ -52,28 +56,32 @@ liKeYun_Ylb/
 │   ├── uploads/      # User uploaded files (persistent)
 │   └── logs/         # Application logs
 ├── docker/           # Docker configuration files
-├── docker compose.yml
+├── docker-compose.yml
 └── Dockerfile
 ```
 
 ## 🔧 Configuration
 
 ### Changing the Port
-Edit `docker compose.yml` and modify the ports section:
+Create a `.env` file to customize the port:
+```bash
+echo "HOST_PORT=8080" > .env  # Use any port you prefer
+```
+Or edit `docker-compose.yml` directly:
 ```yaml
 ports:
-  - "YOUR_PORT:80"  # Replace YOUR_PORT with your desired port
+  - "${HOST_PORT:-80}:80"  # Default is 80, override with HOST_PORT env var
 ```
 
 ### Database Credentials
-Default database credentials are set in the Dockerfile. For production, you should:
-1. Modify the password in `docker/start.sh`
-2. Update the password in the Dockerfile
-3. Rebuild the image
+Default MySQL root password is `likeyun123456` (set in `docker/start.sh`). 
+For production, change it after installation:
+1. Follow the Post-Installation Security steps below
+2. Or modify `docker/start.sh` before first deployment
 
 ### Timezone
 Default timezone is set to `Asia/Shanghai`. To change it:
-1. Edit the `TZ` environment variable in `docker compose.yml`
+1. Edit the `TZ` environment variable in `docker-compose.yml`
 2. Restart the container
 
 ## 🛠️ Common Operations

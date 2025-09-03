@@ -56,22 +56,10 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 777 /var/www/html/console/upload \
     && chmod -R 755 /var/www/html/console/plugin/app
 
-# Create database configuration file
+# Ensure console directory exists with proper permissions
+# Do NOT create Db.php here - let the installer create it
 RUN mkdir -p /var/www/html/console \
-    && echo '<?php' > /var/www/html/console/Db.php \
-    && echo '' >> /var/www/html/console/Db.php \
-    && echo '$config = array(' >> /var/www/html/console/Db.php \
-    && echo "    'db_host' => 'localhost'," >> /var/www/html/console/Db.php \
-    && echo "    'db_port' => 3306," >> /var/www/html/console/Db.php \
-    && echo "    'db_name' => 'likeyun_ylb'," >> /var/www/html/console/Db.php \
-    && echo "    'db_user' => 'root'," >> /var/www/html/console/Db.php \
-    && echo "    'db_pass' => 'likeyun123456'," >> /var/www/html/console/Db.php \
-    && echo "    'db_prefix' => ''," >> /var/www/html/console/Db.php \
-    && echo "    'folderNum' => 'common'," >> /var/www/html/console/Db.php \
-    && echo "    'version' => '2.4.6'" >> /var/www/html/console/Db.php \
-    && echo ');' >> /var/www/html/console/Db.php \
-    && echo '' >> /var/www/html/console/Db.php \
-    && echo '?>' >> /var/www/html/console/Db.php
+    && chmod -R 777 /var/www/html/console
 
 # Configure Supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
